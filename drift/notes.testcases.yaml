@@ -1,0 +1,118 @@
+# yaml-language-server: $schema=https://download.pactflow.io/drift/schemas/drift.testcases.v1.schema.json
+
+# Drift test cases for the Notes MCP server.
+#
+# These run unchanged against both transports — Streamable HTTP and stdio — because
+# only the provider URL differs between them. See the Makefile's `test` and
+# `test_stdio` targets.
+
+drift-testcase-file: v1
+title: "Notes MCP Server"
+
+sources:
+  - name: notes
+    path: ../notes.mcp.yaml
+
+plugins:
+  - name: mcp
+  # Required for outputSchema validation: the MCP plugin delegates JSON Schema
+  # validation to the json plugin rather than reimplementing it.
+  - name: json
+  - name: junit-output  # writes a JUnit XML report to output/reports/junit/
+
+operations:
+  # ── drift: compare the declaration against the live server, invoking nothing ──
+
+  discover:
+    target: notes:drift/discover
+    description: "Server responds to discovery and negotiates a protocol era"
+    sequence: -100
+
+  drift_all:
+    target: notes:drift/all
+    description: "Declared surface matches the live server"
+
+  drift_capabilities:
+    target: notes:drift/capabilities
+    description: "Advertised capabilities match the surface actually served"
+
+  # `drift/all` is the union of the four scoped checks below, so use one style or
+  # the other — never both, or every comparison runs twice.
+  #
+  # Scoped checks give a pass/fail row per category, which shows at a glance which
+  # part of the surface moved. They also let a team verify only the part it owns:
+  #
+  #   drift_tools:              { target: notes:drift/tools }
+  #   drift_resources:          { target: notes:drift/resources }
+  #   drift_resource_templates: { target: notes:drift/resourceTemplates }
+  #   drift_prompts:            { target: notes:drift/prompts }
+
+  # ── invocation: call the server and verify it behaves as documented ──────────
+
+  createNote_Success:
+    target: notes:tool/create_note
+    description: "Creating a note returns structuredContent matching the outputSchema"
+    parameters:
+      arguments:
+        title: "Shopping"
+        body: "milk, eggs"
+    expected:
+      result:
+        structuredContent:
+          title: "Shopping"
+
+  createNote_MissingArguments:
+    target: notes:tool/create_note
+    description: "Omitting required arguments is a protocol error, not a tool error"
+    parameters:
+      arguments:
+        title: "Incomplete"
+    expected:
+      error:
+        code: -32602
+
+  readNote_Known:
+    target: notes:tool/read_note
+    description: "Reading a seeded note returns its body"
+    parameters:
+      arguments:
+        id: "1"
+    expected:
+      result:
+        content:
+          - contains: "first note"
+
+  readNote_Unknown:
+    target: notes:tool/read_note
+    description: "An unknown note is a tool error, not a protocol error"
+    parameters:
+      arguments:
+        id: "does-not-exist"
+    expected:
+      result:
+        isError: true
+        content:
+          - contains: "not found"
+
+  readResource_Index:
+    target: notes:resource/notes://index
+    description: "The notes index resource is readable"
+
+  getPrompt_Summarise:
+    target: notes:prompt/summarise_note
+    description: "The summarise prompt renders with an argument"
+    parameters:
+      arguments:
+        id: "1"
+
+  deleteNote_Destructive:
+    target: notes:tool/delete_note
+    description: "Deleting a note — skip with `--tags '!destructive'`"
+    # The MCP plugin tags this operation automatically because the tool declares
+    # annotations.destructiveHint: true.
+    tags: [destructive]
+    parameters:
+      arguments:
+        # A dedicated seed note, so this never removes a fixture other tests rely on.
+        id: "disposable"
+    sequence: 100

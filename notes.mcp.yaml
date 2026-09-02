@@ -1,0 +1,81 @@
+tools:
+  # Authored in Swagger Studio; verified by Drift.
+  - name: read_note
+    title: Read Note
+    description: Read the contents of a note by its ID.
+    annotations:
+      readOnlyHint: true
+      destructiveHint: false
+      idempotentHint: true
+    inputSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the note to read.
+      required:
+        - id
+
+  - name: create_note
+    title: Create Note
+    description: Create a new note with the given title and body.
+    annotations:
+      readOnlyHint: false
+      destructiveHint: false
+      idempotentHint: false
+    inputSchema:
+      type: object
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+      required:
+        - title
+        - body
+    outputSchema:
+      type: object
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+      required:
+        - title
+        - body
+
+  - name: delete_note
+    title: Delete Note
+    description: Permanently delete a note by its ID. This action cannot be undone.
+    annotations:
+      readOnlyHint: false
+      destructiveHint: true
+      idempotentHint: true
+    inputSchema:
+      type: object
+      properties:
+        id:
+          type: string
+      required:
+        - id
+
+resources:
+  - name: notes_index
+    uri: notes://index
+    description: A list of all note IDs and their titles.
+    mimeType: application/json
+
+resourceTemplates:
+  - name: note_by_id
+    uriTemplate: notes://notes/{id}
+    description: The full content of a single note, addressed by its ID.
+    mimeType: text/plain
+
+prompts:
+  - name: summarise_note
+    title: Summarise Note
+    description: Ask the assistant to produce a concise summary of a specific note.
+    arguments:
+      - name: id
+        description: The ID of the note to summarise.
+        required: true

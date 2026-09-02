@@ -1,0 +1,12 @@
+# Drift output (verification results, JUnit reports)
+output/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Local environment overrides
+.env
+
+# OS
+.DS_Store

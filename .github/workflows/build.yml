@@ -1,0 +1,101 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  PACT_BROKER_BASE_URL: ${{ vars.PACT_BROKER_BASE_URL }}
+  PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
+  GIT_COMMIT: ${{ github.sha }}
+
+jobs:
+  verify-and-publish:
+    name: Verify with Drift and publish to PactFlow
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install Drift
+        run: |
+          wget -O - https://download.pactflow.io/drift/latest/linux-x86_64.tgz | tar xz -C /usr/local/bin
+          drift auth login
+
+      # Verifies the running server against notes.mcp.yaml, then publishes the
+      # definition to PactFlow as an MCP provider contract together with the
+      # Drift verification results — whether verification passed or failed.
+      - name: Verify and publish provider contract
+        run: GIT_BRANCH=${GITHUB_REF#refs/heads/} make ci
+
+      - name: Publish test report
+        uses: dorny/test-reporter@v3
+        if: always()
+        with:
+          name: Drift verification results
+          path: output/reports/junit/verification-result.xml
+          reporter: java-junit
+          fail-on-error: false
+          # An earlier failure means no report was produced; don't pile a
+          # second, misleading error on top of the real one.
+          fail-on-empty: false
+
+      - name: Upload JUnit report
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: junit-report
+          path: output/reports/junit/verification-result.xml
+          retention-days: 30
+
+  # The same testcase file, unchanged, against the older `initialize` handshake
+  # and over the stdio transport. Drift negotiates the era and handles the
+  # transport, so neither needs its own tests.
+  compatibility:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Legacy protocol era
+            target: test_legacy
+          - name: stdio transport
+            target: test_stdio
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install Drift
+        run: |
+          wget -O - https://download.pactflow.io/drift/latest/linux-x86_64.tgz | tar xz -C /usr/local/bin
+          drift auth login
+
+      - run: make ${{ matrix.target }}
+
+  # Runs the server in a mode that deliberately diverges from the definition and
+  # asserts Drift catches it. This job passing means the checks above are load
+  # bearing rather than vacuously green.
+  drift-detection:
+    name: Detects a drifted server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install Drift
+        run: |
+          wget -O - https://download.pactflow.io/drift/latest/linux-x86_64.tgz | tar xz -C /usr/local/bin
+          drift auth login
+
+      - run: make test_drift
