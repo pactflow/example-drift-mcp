@@ -6,7 +6,10 @@ on:
   workflow_dispatch:
 
 env:
-  PACT_BROKER_BASE_URL: ${{ vars.PACT_BROKER_BASE_URL }}
+  # A repository variable is preferred — the broker URL is not a credential, and
+  # leaving it unmasked makes CI failures much easier to diagnose. Falls back to
+  # a secret of the same name so the example works either way.
+  PACT_BROKER_BASE_URL: ${{ vars.PACT_BROKER_BASE_URL || secrets.PACT_BROKER_BASE_URL }}
   PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
   GIT_COMMIT: ${{ github.sha }}
 
