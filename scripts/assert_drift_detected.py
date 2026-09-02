@@ -20,20 +20,27 @@ from pathlib import Path
 # surface moving; `createNote_Success` catches the outputSchema violation.
 EXPECTED_FAILURES = {"drift_all", "createNote_Success"}
 
-# The result bundle is a multipart document; the operation results live in a
-# JSON part that starts with this key.
-JSON_MARKER = '{"namespaceMap'
+# The result bundle is a multipart document. Its sections are separated by this
+# boundary, and the operation results live in the section named "results".
+BOUNDARY = "--DRIFT-BOUNDARY-MARKER"
 
 
 def load_results(bundle: Path) -> dict:
-    """Extracts the JSON payload embedded in a Drift result bundle."""
-    text = bundle.read_text()
-    start = text.find(JSON_MARKER)
-    if start == -1:
-        raise ValueError(f"no JSON payload found in {bundle}")
-    # The payload is followed by further multipart sections, so decode just the
-    # first complete JSON value rather than the rest of the file.
-    return json.JSONDecoder().raw_decode(text[start:])[0]
+    """Extracts the `results` JSON section from a Drift result bundle.
+
+    Each section is a set of headers, a blank line, then the body — so the body
+    is whatever follows the first blank line. Sections other than `results`
+    (and any trailing content) are skipped.
+    """
+    for section in bundle.read_text().split(BOUNDARY):
+        headers, _, body = section.partition("\n\n")
+        if 'name="results"' not in headers or not body.strip():
+            continue
+        try:
+            return json.loads(body.strip().rstrip("-").strip())
+        except json.JSONDecodeError:
+            continue
+    raise ValueError(f"no `results` JSON section found in {bundle}")
 
 
 def operation_results(bundle: Path) -> dict[str, str]:
