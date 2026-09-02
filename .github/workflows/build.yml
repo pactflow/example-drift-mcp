@@ -35,24 +35,14 @@ jobs:
       - name: Verify and publish provider contract
         run: GIT_BRANCH=${GITHUB_REF#refs/heads/} make ci
 
-      - name: Publish test report
-        uses: dorny/test-reporter@v3
-        if: always()
-        with:
-          name: Drift verification results
-          path: output/reports/junit/verification-result.xml
-          reporter: java-junit
-          fail-on-error: false
-          # An earlier failure means no report was produced; don't pile a
-          # second, misleading error on top of the real one.
-          fail-on-empty: false
-
-      - name: Upload JUnit report
+      # The result bundle is the artefact published to PactFlow; keeping a copy
+      # makes it possible to inspect exactly what a build reported.
+      - name: Upload Drift results
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: junit-report
-          path: output/reports/junit/verification-result.xml
+          name: drift-results
+          path: output/results/
           retention-days: 30
 
   # The same testcase file, unchanged, against the older `initialize` handshake

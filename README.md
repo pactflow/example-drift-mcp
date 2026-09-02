@@ -105,8 +105,8 @@ make test
 Starts the server, runs `drift verify` against it, shuts it down. Results land in
 `output/`:
 
-- `output/results/verification.*.result` — the bundle published to PactFlow
-- `output/reports/junit/verification-result.xml` — a JUnit report for CI
+- `output/results/verification.*.result` — the bundle published to PactFlow,
+  and uploaded as a CI artifact
 
 ### The other modes
 
@@ -144,10 +144,10 @@ Everything else still passes — only the tool surface moved.
 Note what this target asserts. `drift verify` exiting non-zero proves nothing on
 its own: it also exits non-zero when it can't authenticate or can't reach the
 server. So the exit code is ignored, and
-[`scripts/assert_drift_detected.py`](scripts/assert_drift_detected.py) checks the
-JUnit report to confirm Drift actually ran and flagged `drift_all` and
-`createNote_Success` specifically. Without that, the CI job would pass while
-testing nothing.
+[`scripts/assert_drift_detected.py`](scripts/assert_drift_detected.py) reads the
+result bundle to confirm Drift actually ran and recorded failures for
+`drift_all` and `createNote_Success` specifically. Without that, the CI job
+would pass while testing nothing.
 
 ## Transports
 

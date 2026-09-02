@@ -18,7 +18,6 @@ plugins:
   # Required for outputSchema validation: the MCP plugin delegates JSON Schema
   # validation to the json plugin rather than reimplementing it.
   - name: json
-  - name: junit-output  # writes a JUnit XML report to output/reports/junit/
 
 operations:
   # ── drift: compare the declaration against the live server, invoking nothing ──
