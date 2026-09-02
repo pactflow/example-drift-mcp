@@ -42,7 +42,8 @@ define http_verify
 	drift verify \
 	  --server-url http://127.0.0.1:$(2)/mcp \
 	  --test-files $(TESTCASES) \
-	  --output-dir $(3) $(4)
+	  --output-dir $(3) \
+	  --generate-result $(4)
 endef
 
 ## =====================
@@ -65,7 +66,8 @@ test_stdio:
 	drift verify \
 	  --server-url "stdio:///python3?arg=server/stdio_server.py" \
 	  --test-files $(TESTCASES) \
-	  --output-dir $(OUTPUT_DIR)/stdio
+	  --output-dir $(OUTPUT_DIR)/stdio \
+	  --generate-result
 
 ## Skip operations the plugin tagged `destructive` (delete_note is tagged
 ## automatically because it declares annotations.destructiveHint: true).
