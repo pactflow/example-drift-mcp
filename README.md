@@ -2,7 +2,7 @@
 
 [![Build](https://github.com/pactflow/example-drift-mcp/actions/workflows/build.yml/badge.svg)](https://github.com/pactflow/example-drift-mcp/actions/workflows/build.yml)
 
-An example of using [Drift](https://docs.pactflow.io/docs/drift) to verify that a
+An example of using [Drift](https://support.smartbear.com/swagger/contract-testing/docs/en/drift.html) to verify that a
 [Model Context Protocol](https://modelcontextprotocol.io) server still offers the
 tools it promised, and that those tools still behave as documented — then
 publishing that proof to [PactFlow](https://pactflow.io).
@@ -92,7 +92,7 @@ The same testcase file drives both transports — only the provider URL differs.
 ### Prerequisites
 
 - Python 3.9+ (no third-party packages — the servers are standard library only)
-- [Drift](https://docs.pactflow.io/docs/drift/getting-started/installation) **2608.3.0 or later**, which is when the `mcp` plugin shipped
+- [Drift](https://support.smartbear.com/swagger/contract-testing/docs/en/drift.html) **2608.3.0 or later**, which is when the `mcp` plugin shipped
 - A PactFlow account with Drift enabled, and `PACT_BROKER_BASE_URL` / `PACT_BROKER_TOKEN` set
 - Docker (only for publishing to PactFlow)
 
@@ -324,12 +324,6 @@ unmasked in the logs makes a misconfiguration obvious instead of showing `***`.
 - **One spawned server per provider URL per run**; a server that dies mid-run isn't restarted.
 - **Resource templates aren't directly invocable.** Target a concrete URI with
   `parameters.uri` instead.
-
-## Related examples
-
-- [example-drift-grpc](https://github.com/pactflow/example-drift-grpc) — the same idea for a gRPC provider
-- [example-bi-directional-provider-drift](https://github.com/pactflow/example-bi-directional-provider-drift) — Drift verifying an OpenAPI provider, wired into bi-directional contract testing
-- [Drift documentation](https://docs.pactflow.io/docs/drift)
 
 ## License
 
